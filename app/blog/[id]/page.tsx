@@ -1,8 +1,8 @@
 import React from "react";
 import { Metadata } from 'next';
 import { constructMetadata } from '@/lib/metadata';
-import { ALL_BLOG_POSTS, POPULAR_ARTICLES, getAuthenticImage } from "../posts";
-import { EXPANDED_SECTIONS } from "../expandedPosts";
+import { ALL_BLOG_POSTS, POPULAR_ARTICLES, getAuthenticImage } from "@/app/blog/posts";
+import { EXPANDED_SECTIONS } from "@/app/blog/expandedPosts";
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
@@ -202,10 +202,16 @@ const CUSTOM_ARTICLE_ENRICHMENTS: Record<string, Enrichments> = {
   }
 };
 
+export async function generateStaticParams() {
+  return ALL_BLOG_POSTS.map((post) => ({
+    id: post.id,
+  }));
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
-  const resolvedParams = await params;
-  const rawId = resolvedParams.id || "";
-  const decodedId = decodeURIComponent(rawId);
+  const resolvedParams = params ? await params : null;
+  const rawId = resolvedParams?.id || "";
+  const decodedId = rawId ? decodeURIComponent(rawId) : "";
   
   const foundArticle = ALL_BLOG_POSTS.find((p) => {
     const postId = p.id.toLowerCase();
@@ -215,10 +221,10 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     return (
       postId === cleanRaw ||
       postId === cleanDecoded ||
-      postId.replace(/ä/g, "ae") === cleanDecoded ||
-      postId === cleanDecoded.replace(/ä/g, "ae") ||
-      postId.replace(/ä/g, "ae") === cleanRaw ||
-      postId === cleanRaw.replace(/ä/g, "ae")
+      (rawId && postId.replace(/ä/g, "ae") === cleanDecoded) ||
+      (decodedId && postId === cleanDecoded.replace(/ä/g, "ae")) ||
+      (rawId && postId.replace(/ä/g, "ae") === cleanRaw) ||
+      (rawId && postId === cleanRaw.replace(/ä/g, "ae"))
     );
   });
 
@@ -238,14 +244,14 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 }
 
 export default async function ArticlePage({ params, searchParams }: PageProps) {
-  const decodedParams = await params;
-  const decodedSearchParams = await searchParams;
+  const decodedParams = params ? await params : null;
+  const decodedSearchParams = searchParams ? await searchParams : null;
   const page = decodedSearchParams?.page || "1";
   const category = decodedSearchParams?.category || "Alle";
   const q = decodedSearchParams?.q || "";
   
   const rawId = decodedParams?.id || "";
-  const decodedId = decodeURIComponent(rawId);
+  const decodedId = rawId ? decodeURIComponent(rawId) : "";
   
   const foundArticle = ALL_BLOG_POSTS.find((p) => {
     const postId = p.id.toLowerCase();
@@ -255,10 +261,10 @@ export default async function ArticlePage({ params, searchParams }: PageProps) {
     return (
       postId === cleanRaw ||
       postId === cleanDecoded ||
-      postId.replace(/ä/g, "ae") === cleanDecoded ||
-      postId === cleanDecoded.replace(/ä/g, "ae") ||
-      postId.replace(/ä/g, "ae") === cleanRaw ||
-      postId === cleanRaw.replace(/ä/g, "ae")
+      (rawId && postId.replace(/ä/g, "ae") === cleanDecoded) ||
+      (decodedId && postId === cleanDecoded.replace(/ä/g, "ae")) ||
+      (rawId && postId.replace(/ä/g, "ae") === cleanRaw) ||
+      (rawId && postId === cleanRaw.replace(/ä/g, "ae"))
     );
   });
 
